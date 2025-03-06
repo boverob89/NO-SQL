@@ -1,1 +1,2 @@
-Per facilitare la comprensione e non generare confusione, il risultato di alcune query mostra solo un singolo record come esempio. Tuttavia, l'output effettivo della query può restituire più risultati a seconda dei dati presenti nel database.
+Per facilitare la comprensione e non generare confusione, il risultato di alcune query mostra solo un singolo record come esempio. 
+Tuttavia, l'output effettivo della query può restituire più risultati a seconda dei dati presenti nel database.
