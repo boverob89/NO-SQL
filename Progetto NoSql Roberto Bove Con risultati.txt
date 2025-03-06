@@ -1,0 +1,138 @@
+1.Riporta tutti i contatti con webcorp 
+db.progetto.find({Società: "WebCorp"},// filtro su Società Webcorp 
+		{_id: true, Nome: true, Cognome: true}) //proiezione id, nome e cognome true =1, false = 0
+
+{
+  _id: ObjectId('67c06e709a3909c5660ec0b0'),
+  Nome: 'Alessia',
+  Cognome: 'Moretti'
+}
+
+
+2.Identificare i contatti con più di un numero di telefono.
+db.progetto.find(
+  { 
+    $and: [ // and nelle parentesi quadre
+      { Numero_di_cellulare: { $type: "array" } },  // Contolla numero di cellulare se è un array 
+      { $expr: { $gt: [ { $size: "$Numero_di_cellulare" }, 1 ] } }//expr per confrontare che numero_di_cell abbia più di un elemento, gt equivale a >, size conta i numeri di cell esistenti
+    ]
+  },
+  { _id: true, Nome: true, Cognome: true } 
+)
+
+
+{
+  _id: ObjectId('67c06e709a3909c5660ec0a7'),
+  Nome: 'Laura',
+  Cognome: 'Rossi'
+}
+
+
+3.Estrarre solo i numeri di telefono dei contatti con tag "lavoro".
+db.progetto.find({Tag: "lavoro"}, //filtro su Tag lavoro
+		{Numero_di_cellulare: 1}) //visualizza solo numeri di cellulare
+
+
+{
+  _id: ObjectId('67c06e709a3909c5660ec0a6'),
+  Numero_di_cellulare: '348123456'
+}
+
+
+
+4.Riportare nome e cognome dei contatti senza profili social.
+db.progetto.find({ "Altri_contatti.Profilo_social": { $exists: false } }, //profilo social è un doc embeddato all'interno di altri contatti, se non esiste profilo social
+		{ Nome: 1, Cognome: 1 }) //visualizzza nome e cognome
+
+{
+  _id: ObjectId('67c06e709a3909c5660ec0a6'),
+  Nome: 'Marco',
+  Cognome: 'Bianchi'
+}
+
+
+5.Contare quanti contatti sono etichettati come “amici stretti” e quanti no.
+db.progetto.aggregate([
+  { $group: { 
+      _id: {Amici_Stretti: "$Amici_stretti"}, //"$Amici_stretti" indica un riferimento a un campo del documento, Amici_stretti raggruppa i documenti in base al valore del campo 
+      numero_persone: { $count: {} } //numero persone campo creato temporaneamente in cui è stato calcolato il numero di documenti che hanno lo stesso valore nel campo Amici_stretti
+    } 
+  }
+])
+
+{
+  _id: {
+    Amici_Stretti: false
+  },
+  numero_persone: 6
+}
+
+{
+  _id: {
+    Amici_Stretti: true
+  },
+  numero_persone: 5
+}
+
+{
+  _id: {
+    Amici_Stretti: null
+  },
+  numero_persone: 1
+}
+
+
+6.Calcolare il numero medio di chiamate effettuate nell'ultimo mese dai contatti “amici stretti”.
+db.progetto.aggregate([
+  { $match: { Amici_stretti: true } },  // Filtra solo gli amici stretti
+  { $group: { _id:{amici_stretti: '$Amici_stretti'}, //amici stretti per un riferimento output
+	    media_chiamate: { $avg: "$Chiamate_ultimo_mese" } } } // media chiamate creato provvisoriamente, avg equivale a calcolare la media
+])
+
+{
+  _id: {
+    amici_stretti: true
+  },
+  media_chiamate: 16.4
+}
+
+
+
+
+4.1
+Aggiungi a Simone Azzurri il numero 345678902
+  
+db.progetto.find({Nome: "Simone", Cognome: "Azzurri" }, { Numero_di_cellulare: 1})  // ho cercato il numero di cellulare
+output: Numero_di_cellulare: 345678901
+
+
+successivamente ho trasformato la stringa in array, ho copiato il numero cercato in precedenza e aggiunto anche il nuovo. 
+Procedimento macchinoso ma funzionante: 
+
+db.progetto.updateOne(
+  { Nome: "Simone", Cognome: "Azzurri" },
+  { $set: { Numero_di_cellulare: [ "345678901", "345678902" ] } }
+)
+
+
+
+4.2
+Aggiungi un nuovo documento contenente il contatto di Mary Salgado con numero 346679933 e indirizzo Via 25 Aprile 3, Firenze
+db.progetto.insertOne({ //all'interno della shell Mongosh
+    Nome: "Mary",
+    Cognome: "Salgado",
+    Numero_di_cellulare: 346679933,
+    Altri_contatti: {
+        Indirizzo: "Via 25 Aprile 3, Firenze"
+    }
+})
+
+
+se inserito tramite adddata bisogna mettere gli apici sia alle chiavi che ai valori
+{   "Nome": "Mary",
+    "Cognome": "Salgado",
+    "Numero_di_cellulare": 346679933,
+    "Altri_contatti": {
+        "Indirizzo": "Via 25 Aprile 3, Firenze"
+    }
+}
